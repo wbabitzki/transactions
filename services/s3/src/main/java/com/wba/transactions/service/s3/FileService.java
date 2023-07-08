@@ -1,55 +1,64 @@
 package com.wba.transactions.service.s3;
 
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.ListObjectVersionsRequest;
-import software.amazon.awssdk.services.s3.model.ListObjectVersionsResponse;
-import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
-import software.amazon.awssdk.services.s3.model.ListObjectsResponse;
+import ch.wba.accounting.banana.BananaTransactionDto;
+import ch.wba.accounting.banana.BananaTransactionReader;
+import software.amazon.awssdk.services.s3.model.ObjectVersion;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class FileService {
-    private S3Client s3;
+    private S3Provider s3Provider = new S3Provider(S3_STORE_NAME);
+    private BananaTransactionReader bananaReader;
 
     private static final String S3_STORE_NAME = "wba-file-store";
 
-    private FileDao toFileDao(S3Object o) {
-        final ListObjectVersionsResponse versionsResponse = listObjectVersion(o);
-        return new FileDao(o.key(), o.size(), o.lastModified(), versionsResponse.versions().size());
-    }
-
-    protected S3Client getS3() {
-        if (s3 == null) {
-            s3 = S3Client.builder()
-                    .region(Region.EU_CENTRAL_1)
-                    .build();
-        }
-        return s3;
-    }
-
     public List<FileDao> listStoredFiles() {
-        return listObjects(S3_STORE_NAME)
-                .contents()
+        return s3Provider.listObjects()
                 .stream()
                 .map(this::toFileDao)
                 .collect(Collectors.toList());
     }
 
-    private ListObjectVersionsResponse listObjectVersion(S3Object o) {
-        final ListObjectVersionsRequest request = ListObjectVersionsRequest.builder()
-                .bucket(S3_STORE_NAME)
-                .prefix(o.key())
-                .build();
-        return getS3().listObjectVersions(request);
+    protected BananaTransactionReader getBananaReader() {
+        if (bananaReader == null) {
+            bananaReader = new BananaTransactionReader();
+        }
+        return bananaReader;
     }
 
-    private ListObjectsResponse listObjects(String bucket) {
-        ListObjectsRequest request = ListObjectsRequest.builder()
-                .bucket(bucket)
-                .build();
-        return getS3().listObjects(request);
+    private FileDao toFileDao(S3Object o) {
+        final List<ObjectVersion> versions = s3Provider.listObjectVersion(o.key());
+        try {
+            BufferedReader bufferedReader = s3Provider.readFile(o.key());
+            final List<BananaTransactionDto> bananaTransactionDtos = getBananaReader().readTransactions(bufferedReader);
+
+            final LocalDate fromDate = bananaTransactionDtos.stream()
+                    .map(BananaTransactionDto::getDate)
+                    .filter(Objects::nonNull)
+                    .min(Comparator.naturalOrder())
+                    .orElse(null);
+
+            final LocalDate untilDate = bananaTransactionDtos.stream()
+                    .map(BananaTransactionDto::getDate)
+                    .filter(Objects::nonNull)
+                    .max(Comparator.naturalOrder())
+                    .orElse(null);
+
+            return FileDao.builder()
+                    .name(o.key())
+                    .size(bananaTransactionDtos.size())
+                    .created(o.lastModified())
+                    .versions(versions.size())
+                    .build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

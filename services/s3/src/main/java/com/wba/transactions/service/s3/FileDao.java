@@ -8,14 +8,18 @@ import java.util.Objects;
 public class FileDao {
     String name;
     LocalDateTime lastModified;
-    Long size;
+    int size;
     Integer versions;
 
-    public FileDao(String name, Long size, Instant created, int versions) {
+    FileDao(String name, int size, Instant created, int versions) {
         this.name = name;
         this.size = size;
         this.lastModified = LocalDateTime.ofInstant(created, ZoneOffset.UTC);
         this.versions = versions;
+    }
+
+    public static FileDaoBuilder builder() {
+        return new FileDaoBuilder();
     }
 
     public String getName() {
@@ -26,8 +30,8 @@ public class FileDao {
         return lastModified;
     }
 
-    public long getSize() {
-        return size != null ? size : 0;
+    public int getSize() {
+        return size;
     }
 
     public int getVersions() {

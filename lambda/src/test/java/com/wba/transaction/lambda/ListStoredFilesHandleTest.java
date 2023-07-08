@@ -29,7 +29,6 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -69,8 +68,8 @@ class ListStoredFilesHandleTest {
     public void testHandleRequest() {
         // Arrange
         List<FileDao> files = Arrays.asList(
-                new FileDao("file1", Long.valueOf(500), Instant.parse("2022-10-26T12:25:55.000Z"), Integer.valueOf(2)),
-                new FileDao("file2", Long.valueOf(1500),Instant.parse("2023-01-08T19:42:54.000Z"), Integer.valueOf(5)));
+                FileDao.builder().name("file1").size(500).created(Instant.parse("2022-10-26T12:25:55.000Z")).versions(2).build(),
+                FileDao.builder().name("file2").size(1500).created(Instant.parse("2023-01-08T19:42:54.000Z")).versions(5).build());
         when(service.listStoredFiles()).thenReturn(files);
 
         // Act
