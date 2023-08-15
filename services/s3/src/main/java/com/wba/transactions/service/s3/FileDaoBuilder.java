@@ -1,12 +1,15 @@
 package com.wba.transactions.service.s3;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 final public class FileDaoBuilder {
     private String name;
     private int size;
     private Instant created;
     private int versions;
+    private LocalDate dateFrom;
+    private LocalDate dateTo;
 
     public FileDaoBuilder name(String name) {
         this.name = name;
@@ -28,7 +31,20 @@ final public class FileDaoBuilder {
         return this;
     }
 
+    public FileDaoBuilder dateFrom(LocalDate dateFrom) {
+        this.dateFrom = dateFrom;
+        return this;
+    }
+
+    public FileDaoBuilder dateTo(LocalDate dateTo) {
+        this.dateTo = dateTo;
+        return this;
+    }
+
     public FileDao build() {
-        return new FileDao(name, size, created, versions);
+        final FileDao result = new FileDao(name, size, created, versions);
+        result.setDateFrom(dateFrom);
+        result.setDateTo(dateTo);
+        return result;
     }
 }

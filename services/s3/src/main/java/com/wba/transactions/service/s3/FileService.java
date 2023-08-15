@@ -56,6 +56,8 @@ public class FileService {
                     .size(bananaTransactionDtos.size())
                     .created(o.lastModified())
                     .versions(versions.size())
+                    .dateFrom(fromDate)
+                    .dateTo(untilDate)
                     .build();
         } catch (IOException e) {
             throw new RuntimeException(e);

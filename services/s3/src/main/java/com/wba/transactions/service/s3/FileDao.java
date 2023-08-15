@@ -1,20 +1,23 @@
 package com.wba.transactions.service.s3;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Objects;
 
 public class FileDao {
-    String name;
-    LocalDateTime lastModified;
-    int size;
-    Integer versions;
+    private String name;
+    private LocalDateTime lastModified;
+    private int size;
+    private Integer versions;
+    private LocalDate dateFrom;
+    private LocalDate dateTo;
 
     FileDao(String name, int size, Instant created, int versions) {
         this.name = name;
         this.size = size;
-        this.lastModified = LocalDateTime.ofInstant(created, ZoneOffset.UTC);
+        this.lastModified = created != null ? LocalDateTime.ofInstant(created, ZoneOffset.UTC) : null;
         this.versions = versions;
     }
 
@@ -38,6 +41,22 @@ public class FileDao {
         return versions;
     }
 
+    public LocalDate getDateFrom() {
+        return dateFrom;
+    }
+
+    void setDateFrom(LocalDate dateFrom) {
+        this.dateFrom = dateFrom;
+    }
+
+    public LocalDate getDateTo() {
+        return dateTo;
+    }
+
+    void setDateTo(LocalDate dateTo) {
+        this.dateTo = dateTo;
+    }
+
     @Override
     public String toString() {
         return "FileDao{" +
@@ -45,6 +64,8 @@ public class FileDao {
                 ", lastModified=" + lastModified +
                 ", size=" + size +
                 ", versions=" + versions +
+                ", dateFrom=" + dateFrom +
+                ", dateTo=" + dateTo +
                 '}';
     }
 
@@ -60,7 +81,9 @@ public class FileDao {
         return Objects.equals(name, other.name)
                 && Objects.equals(lastModified, other.lastModified)
                 && Objects.equals(size, other.size)
-                && Objects.equals(versions, other.versions);
+                && Objects.equals(versions, other.versions)
+                && Objects.equals(dateFrom, other.dateFrom)
+                && Objects.equals(dateTo, other.dateTo);
     }
 
     @Override
